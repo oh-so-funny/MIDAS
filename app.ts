@@ -24,7 +24,6 @@ async function getFeedBack(question: string, reply: string) {
         },
       ],
     });
-    console.log("aowifjawiefj");
 
     return response.data.choices[0].message;
   } catch (error) {
@@ -36,7 +35,6 @@ app.post("/api/question", async function (req, res) {
   const question = req.body.question;
   const reply = req.body.reply;
   const feedback = await getFeedBack(question, reply);
-  console.log(feedback);
   res.json(feedback);
 });
 
