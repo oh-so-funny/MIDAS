@@ -20,10 +20,10 @@ export class Question {
   })
   category!: Category;
 
-  @Column("text")
+  @Column({ nullable: false, type: "text" })
   question!: string;
 
   @OneToMany(() => Reply, (reply) => reply.id)
   @JoinColumn({ name: "response" })
-  reply!: Reply;
+  reply!: Reply[];
 }
