@@ -1,10 +1,14 @@
 import express from "express";
 import { Configuration, OpenAIApi } from "openai";
 import dotenv from "dotenv";
+import { Interview } from "./Interview";
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
+
 app.use(express.urlencoded({ extended: true }));
 
 async function getFeedBack(question: string, reply: string) {
@@ -31,11 +35,15 @@ async function getFeedBack(question: string, reply: string) {
   }
 }
 
-app.post("/api/question", async function (req, res) {
+app.get("/api/interview", async function (req, res) {
   const question = req.body.question;
   const reply = req.body.reply;
   const feedback = await getFeedBack(question, reply);
+  const interview = new Interview();
+  interview.question = question;
+  interview.reply = reply;
+  interview.feedback = feedback;
   res.json(feedback);
 });
 
-app.listen(3000);
+app.listen(8080);
