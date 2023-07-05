@@ -1,13 +1,17 @@
 import express from "express";
 import { Configuration, OpenAIApi } from "openai";
 import dotenv from "dotenv";
-import { Interview } from "./Interview";
 import cors from "cors";
+import { InterviewRepository } from "./Repository";
+import Interview from "./Interview";
+import { DatabaseStart } from "./database";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+DatabaseStart();
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,15 +39,29 @@ async function getFeedBack(question: string, reply: string) {
   }
 }
 
-app.get("/api/interview", async function (req, res) {
+app.post("/api/interview", async function (req, res) {
   const question = req.body.question;
   const reply = req.body.reply;
   const feedback = await getFeedBack(question, reply);
-  const interview = new Interview();
-  interview.question = question;
-  interview.reply = reply;
-  interview.feedback = feedback;
+  const intereview = new Interview();
+  intereview.question = question;
+  intereview.reply = reply;
+  intereview.feedback = feedback?.content ?? "";
+  InterviewRepository.save(intereview);
   res.json(feedback);
+});
+
+app.get("/api/interview/:id", async function (req, res) {
+  const question = req.body.question;
+  const interview = await InterviewRepository.findBy({
+    question: question,
+  });
+  res.json(interview);
+});
+
+app.get("/api/interview", async function (req, res) {
+  const AllInterview = await InterviewRepository.find();
+  res.json(AllInterview);
 });
 
 app.listen(8080);

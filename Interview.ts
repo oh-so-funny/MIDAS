@@ -2,16 +2,16 @@ import { ChatCompletionResponseMessage } from "openai";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class Interview {
+export default class Interview {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: "text", nullable: false })
+  @Column({ type: "text" })
   question!: string;
 
-  @Column({ type: "text", nullable: false })
+  @Column({ type: "text" })
   reply!: string;
 
-  @Column({ type: "text", nullable: false })
-  feedback!: ChatCompletionResponseMessage | undefined;
+  @Column({ type: "text" })
+  feedback!: string;
 }
