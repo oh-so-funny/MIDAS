@@ -3,9 +3,9 @@ import Interview from "./Interview";
 
 const AppDataSource = new DataSource({
   type: "mysql",
-  host: "127.0.0.1",
-  password: "rhdbsdud06$",
+  host: "localhost",
   database: "osf",
+  password: "",
   port: 3306,
   synchronize: true,
   entities: [Interview],

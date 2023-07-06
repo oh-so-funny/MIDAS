@@ -1,30 +1,39 @@
 import express from "express";
-import { Configuration, OpenAIApi } from "openai";
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 import dotenv from "dotenv";
 import cors from "cors";
-import { InterviewRepository } from "./Repository";
-import Interview from "./Interview";
-import { DatabaseStart } from "./database";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-DatabaseStart();
-
 app.use(express.urlencoded({ extended: true }));
 
-async function getFeedBack(question: string, reply: string) {
+type Category = "FRONT_END" | "BACK_END" | "PRODUCT_DESIGNER" | "DEVOPS";
+
+const db: Record<
+  string,
+  {
+    reply: string;
+    feedback: ChatCompletionRequestMessage;
+    category: Category;
+  }[]
+> = {};
+
+async function getFeedBack(
+  question: string,
+  reply: string
+): Promise<ChatCompletionRequestMessage> {
   const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: "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",
   });
 
   try {
     const openai = new OpenAIApi(configuration);
 
     const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
+      model: "gpt-3.5-turbo-0613",
       messages: [
         {
           role: "user",
@@ -33,35 +42,45 @@ async function getFeedBack(question: string, reply: string) {
       ],
     });
 
-    return response.data.choices[0].message;
+    return (
+      response.data.choices[0].message ?? { content: "", role: "assistant" }
+    );
   } catch (error) {
     console.log(error);
+    return {
+      role: "assistant",
+      content: "문제가 발생했습니다.",
+    };
   }
 }
 
 app.post("/api/interview", async function (req, res) {
   const question = req.body.question;
   const reply = req.body.reply;
+  const category = req.body.category;
   const feedback = await getFeedBack(question, reply);
-  const intereview = new Interview();
-  intereview.question = question;
-  intereview.reply = reply;
-  intereview.feedback = feedback?.content ?? "";
-  InterviewRepository.save(intereview);
+  const reg = /[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi;
+  const filteredQuestion = question.replace(reg, "");
+
+  if (!db[filteredQuestion]) db[filteredQuestion] = [];
+  db[filteredQuestion].push({ feedback, reply, category });
+
   res.json(feedback);
 });
 
-app.get("/api/interview/:id", async function (req, res) {
-  const question = req.body.question;
-  const interview = await InterviewRepository.findBy({
-    question: question,
-  });
-  res.json(interview);
+app.get("/api/interview/:question", async function (req, res) {
+  const question = req.params.question;
+  const reg = /[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi;
+  const filteredQuestion = question.replace(reg, "");
+  console.log(filteredQuestion);
+  console.log(db);
+  console.log(db[filteredQuestion]);
+  const row = db[filteredQuestion];
+  res.json(row);
 });
 
 app.get("/api/interview", async function (req, res) {
-  const AllInterview = await InterviewRepository.find();
-  res.json(AllInterview);
+  res.json(db);
 });
 
 app.listen(8080);
