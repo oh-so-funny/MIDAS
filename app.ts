@@ -26,7 +26,7 @@ async function getFeedBack(
   reply: string
 ): Promise<ChatCompletionRequestMessage> {
   const configuration = new Configuration({
-    apiKey: "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",
+    apiKey: //api key,
   });
 
   try {
